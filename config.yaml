@@ -1,0 +1,109 @@
+# ============================================================================
+# siKRAS + 5-FU CRC Bulk RNA-seq Analysis — Configuration
+# ============================================================================
+# All analysis parameters are defined here.
+#
+# Paths below are specific to the machine where this pipeline was run.
+# Before running the pipeline, update them to point to your own files:
+#   1. tools.*          (external tool executables)
+#   2. raw_data_dir     (raw FASTQ directory)
+#   3. star.genome_dir  (STAR index)
+#   4. gencode_gtf      (GENCODE GTF)
+
+# --- External tool paths ----------------------------------------------------
+# Update these paths to match your system.
+# If a tool is already on your PATH, you may use just its name (e.g. "STAR").
+tools:
+  star_bin: "/data3/SteveS/1_GitHubSoftware/STAR/bin/Linux_x86_64/STAR"
+  fastqc_bin: "/data3/SteveS/RNAseq_Analysis/tools/FastQC/fastqc"
+  samtools_bin: "/home/ssq/miniconda3/envs/steves/bin/samtools"
+
+# --- Input: raw sequencing data -------------------------------------------
+# Directory containing raw FASTQ files (update to your own path).
+# Each sample should be in its own subdirectory:
+#   raw_data_dir/
+#     Sample_1/
+#       Sample_1_1.fq.gz
+#       Sample_1_2.fq.gz
+#     Sample_2/
+#       ...
+raw_data_dir: "/data3/SteveS/1_LabDataBackup/NextGen_RNAseq/2026-06_EmilyWang_Novogene/X201SC26055957-Z01-F001/01.RawData"
+
+# --- Reference genome ------------------------------------------------------
+# STAR genome index directory (GRCh38.p14, NCBI RefSeq annotation).
+# Update to your own path. Build with: STAR --runMode genomeGenerate ...
+# or download a pre-built index.
+star:
+  genome_dir: "/data3/SteveS/1_GitHubSoftware/STAR/1_RTG_GRCh38_p14"
+  threads: 30
+  quant_mode: "GeneCounts"
+
+# GENCODE GTF (v47), used for gene lengths in TCGA TPM calculation.
+# Update to your own path. Download: bash scripts/download/download_gencode.sh
+gencode_gtf: "/data3/SteveS/RNAseq_Analysis/data/GENCODE/gencode.v47.annotation.gtf.gz"
+
+# --- Sample sheet ----------------------------------------------------------
+# Generated automatically by notebook 00.
+samplesheet: "Data/samplesheet.csv"
+group_col: "group"
+
+# --- DESeq2 differential expression ---------------------------------------
+deseq2:
+  significance:
+    baseMean: 10
+    padj: 0.05
+    log2FC: 0.5
+  # Contrasts: [factor, numerator, denominator]
+  # 'factor' must match the samplesheet 'group' column.
+  contrasts:
+    - ["group", "siKRAS", "siScr"]     # core comparison
+    - ["group", "siKRAS", "Empty"]
+    - ["group", "siKRAS", "Control"]
+    - ["group", "Empty", "Control"]
+
+# --- Enrichment analysis ---------------------------------------------------
+gsea:
+  # Ranking metric: DESeq2 Wald statistic (standard)
+  ranking_metric: "stat"
+  permutation_num: 1000
+  seed: 6
+  prerank_gene_sets:
+    - "MSigDB_Hallmark_2020"
+  enrichr_gene_sets:
+    - "MSigDB_Hallmark_2020"
+    - "KEGG_2021_Human"
+    - "MSigDB_Oncogenic_Signatures"
+    - "Reactome_2022"
+    - "WikiPathway_2023_Human"
+    - "BioCarta_2016"
+  # Pathways selected for focused GSEA running plots (story-relevant)
+  story_pathways:
+    - "KRAS Signaling Up"
+    - "mTORC1 Signaling"
+    - "G2-M Checkpoint"
+    - "DNA Repair"
+    - "Interferon Alpha Response"
+    - "Interferon Gamma Response"
+    - "p53 Pathway"
+    - "Myc Targets V1"
+    - "Oxidative Phosphorylation"
+
+# --- TCGA validation -------------------------------------------------------
+tcga:
+  # TCGA CRC (COAD + READ) data, downloaded to Data/TCGA/
+  counts_file: "Data/TCGA/CRC_raw_counts.tsv.gz"
+  survival_file: "Data/TCGA/CRC_survival.tsv.gz"
+  # Cox regression covariates
+  covariates: ["age", "gender", "stage"]
+
+# --- Output directories ----------------------------------------------------
+output:
+  data_dir: "Data"
+  figures_dir: "Figures"
+  tables_dir: "Data/tables"
+
+# --- KRAS allele analysis --------------------------------------------------
+kras:
+  # G13D c.38G>A position on NC_000012.12 (1-based)
+  chrom: "NC_000012.12"
+  position: 25245347

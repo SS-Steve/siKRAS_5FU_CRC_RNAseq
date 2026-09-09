@@ -1,0 +1,29 @@
+# Data and result directories (delete before pushing to GitHub)
+Data/*
+!Data/README.md
+!Data/gene_sets/
+Figures/
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Alignment outputs (large)
+AlignBAM/
+*.bam
+*.bai
+
+# Raw sequencing data (large)
+*.fq.gz
+*.fastq.gz
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Notebook generator (local dev tool, not published)
+make_notebooks.py
