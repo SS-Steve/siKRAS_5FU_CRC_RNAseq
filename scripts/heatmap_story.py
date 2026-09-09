@@ -54,6 +54,8 @@ def main() -> None:
     expr_z = expr.subtract(expr.mean(axis=0), axis=1).div(expr.std(axis=0), axis=1)
     expr_z = expr_z.T  # genes x samples
 
+    from matplotlib.patches import Patch
+
     fig, ax = plt.subplots(figsize=(8, max(6, len(genes) * 0.32)))
     sns.heatmap(expr_z, cmap=plotting.BWR_CMAP, center=0,
                 cbar_kws={"label": "Row Z-score", "shrink": 0.6},
@@ -61,13 +63,23 @@ def main() -> None:
     ax.set_xticklabels(ordered_samples, rotation=45, ha="right", fontsize=9)
     ax.set_yticklabels(genes, fontsize=9)
 
-    # Separate up/down gene blocks with a horizontal line
+    # Colour gene names by group and separate the two blocks with a line
     n_up = len([g for g in UP_GENES if g in counts.columns])
     ax.axhline(n_up, color="black", linewidth=1.2)
-    ax.text(-0.5, n_up / 2, "KRAS feedback", rotation=90, va="center",
-            ha="right", fontsize=9, fontweight="bold")
-    ax.text(-0.5, n_up + (len(genes) - n_up) / 2, "Proliferation / repair",
-            rotation=90, va="center", ha="right", fontsize=9, fontweight="bold")
+    for lbl, g in zip(ax.get_yticklabels(), genes):
+        lbl.set_color(plotting.COLOR_UP if g in UP_GENES else plotting.COLOR_DOWN)
+
+    # Legend below the heatmap
+    handles = [
+        Patch(facecolor=plotting.COLOR_UP, edgecolor="black",
+              label="KRAS feedback (upregulated)"),
+        Patch(facecolor=plotting.COLOR_DOWN, edgecolor="black",
+              label="Proliferation / repair (downregulated)"),
+    ]
+    fig.subplots_adjust(bottom=0.18)
+    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0, -0.22),
+              ncol=2, frameon=True, facecolor="white", edgecolor="black",
+              fontsize=9)
 
     ax.set_title("KRAS silencing suppresses proliferation and repair programmes")
     plotting.save_figure(fig, "Figures/06_visualization/heatmap_story.png")
